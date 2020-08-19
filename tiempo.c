@@ -7,8 +7,8 @@ int main(){
     double diferencia;
     empieza=clock();
     printf("Codigo haciendo algo\n");
-    for(i=0;i<500000;i++);
+    for(i=0;i<90000000;i++);
     acaba=clock();
     diferencia=(double)(acaba-empieza)/CLOCKS_PER_SEC;
-    printf("El codigo tardo %lf\n",diferencia);
+    printf("El codigo tardo %lf segundos en ejecutarse\n",diferencia);
 }
