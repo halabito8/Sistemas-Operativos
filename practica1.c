@@ -9,10 +9,9 @@ int num_cpus();
 
 int *arreglo;
 int main(int argc, char *argv[]){
-  pthread_t tid;
   pthread_attr_t attr;
   srand(time(NULL));
-  int i, j, temp, upper=20, hilos;
+  int i, j, temp, upper, hilos, inf, sup;
   double diferencia;
   clock_t empieza, acaba;
   
@@ -23,21 +22,34 @@ int main(int argc, char *argv[]){
   printf("De cuanto el arreglo?\n");
   scanf("%i",&upper);
   printf("\n");
+  
   arreglo = (int *)malloc(sizeof(int)*upper);
   for(i=0;i<upper;i++)
-    arreglo[i]=rand()%100;
+    arreglo[i]=rand()%5000;
   pthread_attr_init(&attr);
 
   printf("En cuantos hilos lo quieres dividir?\n");
   scanf("%i",&hilos);
 
+  pthread_t workers[hilos], tid;
+
+  int lim[hilos][2];
   empieza=clock();
   for(i=0;i<hilos;i++){
-    int lim[] = {i*(upper/hilos), (upper/hilos) * (i+1)};
-    pthread_create(&tid, &attr, runner, &lim);
+    inf = i*(upper/hilos);
+    sup = (upper/hilos) * (i+1);
+    lim[i][0] = inf;
+    lim[i][1] = sup;
+    pthread_create(&workers[i], &attr, runner, &lim[i]);
   }
+  printf("Por hilos\n");
+  for(i=0;i<upper;i++)
+    printf("%i ",arreglo[i]);
 
-  pthread_join(tid, NULL);
+  for(i=0;i<hilos;i++)
+    pthread_join(workers[i], NULL);
+
+  printf("\n");
 
   for(i=0;i<upper;i++){
     for(j=0;j<upper-1;j++){
@@ -49,9 +61,11 @@ int main(int argc, char *argv[]){
     }
   }
   acaba=clock();
+  printf("Todo ordenado\n");
   for(i=0;i<upper;i++)
-    printf("%i\n",arreglo[i]);
+    printf("%i ",arreglo[i]);
 
+  printf("\n");
   diferencia=(double)(acaba-empieza)/CLOCKS_PER_SEC;
   printf("El ordenamiento tardo %lf segundos\n", diferencia);
 }

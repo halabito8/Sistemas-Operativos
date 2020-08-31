@@ -3,36 +3,31 @@
 #include<stdlib.h>
 #include<time.h>
 
+int arreglo[20];
 void *runner(void *param);
-
-int *arreglo;
 int main(int argc, char *argv[]){
-  pthread_t tid;
+  pthread_t tid, workers[2];
   pthread_attr_t attr;
   srand(time(NULL));
-  int i, j, temp, upper=20;
-  double diferencia;
-  clock_t empieza, acaba;
-  printf("De cuanto el arreglo?\n");
-  scanf("%i",&upper);
-  printf("\n");
-  arreglo = (int *)malloc(sizeof(int)*upper);
-  for(i=0;i<upper;i++)
+  int i, j, temp;
+  int upper=20;
+  for(i=0;i<20;i++)
     arreglo[i]=rand()%100;
   pthread_attr_init(&attr);
 
-  int lim1[] = {0, upper/2};
+  int lim[2][2] = {0, upper/2};
 
-  int lim2[] = {upper/2, upper};
+  pthread_create(&workers[0], &attr, runner, &lim[0]);
 
-  empieza=clock();
+  lim[1][0] = upper/2;
+  lim[1][1] = upper;
 
-  pthread_create(&tid, &attr, runner, &lim1);
+  pthread_create(&workers[1], &attr, runner, &lim[1]);
 
-  pthread_create(&tid, &attr, runner, &lim2);
-
-  pthread_join(tid, NULL);
-
+  for(i=0;i<2;i++)
+    pthread_join(workers[i], NULL);
+  
+/*
   for(i=0;i<upper;i++){
     for(j=0;j<upper-1;j++){
       if(arreglo[j] > arreglo[j+1]){
@@ -41,13 +36,9 @@ int main(int argc, char *argv[]){
         arreglo[j+1]=temp;
       }
     }
-  }
-  acaba=clock();
+  }*/
   for(i=0;i<upper;i++)
     printf("%i\n",arreglo[i]);
-
-  diferencia=(double)(acaba-empieza)/CLOCKS_PER_SEC;
-  printf("El ordenamiento tardo %lf segundos\n", diferencia);
 }
 
 void *runner(void *param){
