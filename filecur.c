@@ -27,7 +27,7 @@ int main(){
   } res[128];
 
   char lista[100][100], temp[100];
-  int i=0,j,k;
+  int i=0, j, k, max, offset=0, tam=20;
   int c;
 
   DIR *dir = opendir(".");
@@ -49,35 +49,59 @@ int main(){
   }
 
   closedir(dir);
-
+  max=j;
   initscr();
   raw();
   noecho(); /* No muestres el caracter leido */
   cbreak(); /* Haz que los caracteres se le pasen al usuario */
   do {
-    for (k=0; k < j; k++) {
+    for (k=0; (k+offset) < max && k < tam; k++) {
       if (k == i) {
         attron(A_REVERSE);
       }
-      mvprintw(5+k,5,lista[k]);
+      char *nom = lista[k+offset];
+      mvprintw(5+k,5,nom);
+      clrtoeol();
       attroff(A_REVERSE);
     }
     move(5+i,5);
     refresh();
     c = leeChar();
     switch(c) {
-      case 0x1B5B41:
-        i = (i>0) ? i - 1 : j;
+      case 0x1B5B41: // Arriba
+        if(i==0){
+          if(offset > 0){
+            offset -= 1;
+          }
+          else{
+            i = tam;
+            offset = (max - i);
+          }
+        }
+        else{
+          i -= 1;
+        }
         break;
-      case 0x1B5B42:
-        i = (i<k) ? i + 1 : 0;
+      case 0x1B5B42: //Abajo
+        if(  i < (tam-1) && (i<max)){
+          i += 1;
+        }
+        else{
+          if( (offset + i) < (max - 1)){
+            offset += 1;
+          }
+          else{
+            i = offset = 0;
+            clear();
+          }
+        }
         break;
       default:
         // Nothing 
         break;
     }
-    move(10,20);
-    printw("Estoy en %d: Lei 0x%08x",i,c);
+    move(2,10);
+    printw("Estoy en %d: Lei 0x%08x, Offset %02i",i,c, offset);
   } while (c != 0x1b);
   endwin();
   return 0;
