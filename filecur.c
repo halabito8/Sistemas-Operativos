@@ -2,54 +2,24 @@
 #include <dirent.h>
 #include<string.h>
 
-int leeChar() {
-  int chars[5];
-  int ch,i=0;
-  nodelay(stdscr, TRUE);
-  while((ch = getch()) == ERR); /* Espera activa */
-  ungetch(ch);
-  while((ch = getch()) != ERR) {
-    chars[i++]=ch;
-  }
-  /* convierte a numero con todo lo leido */
-  int res=0;
-  for(int j=0;j<i;j++) {
-    res <<=8;
-    res |= chars[j];
-  }
-  return res;
-}
-
-int main(){
-  struct s_dir {
+typedef struct s_dir {
     int tipo;
     char *nombre;
-  } res[128];
+  }s_dir;
+
+int leeChar();
+void leerdir(s_dir res[128], char lista[100][100], int *max);
+void Arriba();
+
+int main(){
+  s_dir res[128];
 
   char lista[100][100], temp[100];
   int i=0, j, k, max, offset=0, tam=20;
   int c;
 
-  DIR *dir = opendir(".");
-  struct dirent *dp;
-  while((dp=readdir(dir)) != NULL) {
-    res[i].tipo = dp->d_type;
-    res[i].nombre=dp->d_name;
-    i++;
-  }
-  for(j=0; j<i; j++) {
-    if (res[j].tipo == DT_DIR) {
-      strcpy(temp,"D ");
-    }
-    else {
-      strcpy(temp,"F ");
-    }
-    strcat(temp,res[j].nombre);
-    strcpy(lista[j],temp);
-  }
+  leerdir(res,lista,&max);
 
-  closedir(dir);
-  max=j;
   initscr();
   raw();
   noecho(); /* No muestres el caracter leido */
@@ -101,8 +71,53 @@ int main(){
         break;
     }
     move(2,10);
-    printw("Estoy en %d: Lei 0x%08x, Offset %02i",i,c, offset);
+    printw("Estoy en %d: Lei 0x%08x, Offset %02i",i, c, offset);
+    clrtoeol();
   } while (c != 0x1b);
   endwin();
   return 0;
+}
+
+int leeChar() {
+  int chars[5];
+  int ch,i=0;
+  nodelay(stdscr, TRUE);
+  while((ch = getch()) == ERR); /* Espera activa */
+  ungetch(ch);
+  while((ch = getch()) != ERR) {
+    chars[i++]=ch;
+  }
+  /* convierte a numero con todo lo leido */
+  int res=0;
+  for(int j=0;j<i;j++) {
+    res <<=8;
+    res |= chars[j];
+  }
+  return res;
+}
+
+void leerdir(s_dir res[128], char lista[100][100], int *max){
+  int i=0,j=0;
+  char temp[100];
+  DIR *dir = opendir(".");
+  struct dirent *dp;
+  while((dp=readdir(dir)) != NULL) {
+    res[i].tipo = dp->d_type;
+    res[i].nombre=dp->d_name;
+    i++;
+  }
+  
+  for(j=0; j<i; j++) {
+    if (res[j].tipo == DT_DIR) {
+      strcpy(temp,"D ");
+    }
+    else {
+      strcpy(temp,"F ");
+    }
+    strcat(temp,res[j].nombre);
+    strcpy(lista[j],temp);
+  }
+
+  closedir(dir);
+  *max=j;
 }
