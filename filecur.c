@@ -1,6 +1,8 @@
 #include <curses.h>
 #include <dirent.h>
 #include<string.h>
+#include<unistd.h>
+#include"hexEditor.c"
 
 typedef struct s_dir {
     int tipo;
@@ -8,17 +10,17 @@ typedef struct s_dir {
   }s_dir;
 
 int leeChar();
-void leerdir(s_dir res[128], char lista[100][100], int *max);
+void leerdir(char *cwd, s_dir res[128], char lista[100][100], int *max);
 void Arriba();
 
 int main(){
   s_dir res[128];
 
-  char lista[100][100], temp[100];
+  char lista[100][100], temp[100], cwd[256], arch[50];
   int i=0, j, k, max, offset=0, tam=20;
   int c;
-
-  leerdir(res,lista,&max);
+  getcwd(cwd, 256);
+  leerdir(cwd,res,lista,&max);
 
   initscr();
   raw();
@@ -30,7 +32,8 @@ int main(){
         attron(A_REVERSE);
       }
       char *nom = lista[k+offset];
-      mvprintw(5+k,5,nom);
+      move(5+k,5);
+      addstr(nom);
       clrtoeol();
       attroff(A_REVERSE);
     }
@@ -66,14 +69,35 @@ int main(){
           }
         }
         break;
+      case 0xa: //enter
+        if( strcmp(lista[i + offset],"D ..") == 0 ){
+          char *p=strrchr(cwd,'/');
+          *p=0;
+          leerdir(cwd,res,lista,&max);
+          clear();
+        }
+        else if( lista[i + offset][0] == 'D' ){
+          strcat(cwd,"/");
+          strcat(cwd,lista[i + offset]+2);
+          printf("Hola %s\n", cwd);
+          leerdir(cwd,res,lista,&max);
+          clear();
+        }
+        else if( lista[i + offset][0] == 'F'){
+          strcat(arch,lista[i + offset]+2);
+          edita(arch);
+          clear();
+        }
+        break;
       default:
         // Nothing 
         break;
     }
     move(2,10);
-    printw("Estoy en %d: Lei 0x%08x, Offset %02i",i, c, offset);
+    printw("Estoy en %d: Lei 0x%08x, Offset %02i, dir: %s",i, c, offset, cwd);
     clrtoeol();
   } while (c != 0x1b);
+  clear();
   endwin();
   return 0;
 }
@@ -96,10 +120,10 @@ int leeChar() {
   return res;
 }
 
-void leerdir(s_dir res[128], char lista[100][100], int *max){
+void leerdir(char *cwd, s_dir res[128], char lista[100][100], int *max){
   int i=0,j=0;
   char temp[100];
-  DIR *dir = opendir(".");
+  DIR *dir = opendir(cwd);
   struct dirent *dp;
   while((dp=readdir(dir)) != NULL) {
     res[i].tipo = dp->d_type;
