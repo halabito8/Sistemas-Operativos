@@ -11,7 +11,6 @@
 /* Variable global para mejor legibilidad */
 int fd; // Archivo a leer
 
-
 char *hazLinea(char *base, int dir) {
 	char linea[100]; // La linea es mas pequeña
 	int o=0;
@@ -71,10 +70,36 @@ void pantalla(char *map, int base){
 	refresh();
 }
 
+void modifica(char *map,int c, int x, int y, int offset){
+	char c1,n1;
+	if(x<16){
+		char n = tolower(c);
+		if((n>='0' && n<='9') || (n>='a' && n<='f')){
+			c1 = leeChar();
+			char n1 = tolower(c1);
+			if((n1>='0' && n1<='9') || (n1>='a' && n1<='f')){
+				char hd[3];
+				hd[0]=n;
+				hd[1]=n1;
+				hd[2]=0;
+				long l = strtol(hd,NULL,16);
+				map[(offset+y)*16+x]=l;
+				pantalla(map, offset*16);
+			}
+		}
+	}
+	else{
+		char n = c;
+		if(isprint(n)){
+			map[(offset+y-1)*16+x]=n;
+			pantalla(map, offset*16);
+		}
+	}
+}
+
 int edita(char *filename) {
 	int i,c,x=0,y=0,px=0,offset=0,tamanol=16;
 	/* Lee archivo */
-	char c1,n1;
 	char *map = mapFile(filename);
 	if (map == NULL) {
 		exit(EXIT_FAILURE);
@@ -137,29 +162,30 @@ int edita(char *filename) {
 				}
 				break;
 			default:
-				if(x<16){
-					char n = tolower(c);
-					if((n>='0' && n<='9') || (n>='a' && n<='f')){
-						c1 = leeChar();
-						char n1 = tolower(c1);
-						if((n1>='0' && n1<='9') || (n1>='a' && n1<='f')){
-							char hd[3];
-							hd[0]=n;
-							hd[1]=n1;
-							hd[2]=0;
-							long l = strtol(hd,NULL,16);
-							map[(offset+y)*16+x]=l;
-							pantalla(map, offset*16);
-						}
-					}
-				}
-				else{
-					char n = tolower(c);
-					if(isprint(n)){
-						map[(offset+y-1)*16+x]=n;
-						pantalla(map, offset*16);
-					}
-				}
+				modifica(map,c,x,y,offset);
+				// if(x<16){
+				// 	char n = tolower(c);
+				// 	if((n>='0' && n<='9') || (n>='a' && n<='f')){
+				// 		c1 = leeChar();
+				// 		char n1 = tolower(c1);
+				// 		if((n1>='0' && n1<='9') || (n1>='a' && n1<='f')){
+				// 			char hd[3];
+				// 			hd[0]=n;
+				// 			hd[1]=n1;
+				// 			hd[2]=0;
+				// 			long l = strtol(hd,NULL,16);
+				// 			map[(offset+y)*16+x]=l;
+				// 			pantalla(map, offset*16);
+				// 		}
+				// 	}
+				// }
+				// else{
+				// 	char n = tolower(c);
+				// 	if(isprint(n)){
+				// 		map[(offset+y-1)*16+x]=n;
+				// 		pantalla(map, offset*16);
+				// 	}
+				// }
 				break;
 		}
 		move(28,10);
