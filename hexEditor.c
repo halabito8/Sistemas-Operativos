@@ -40,7 +40,7 @@ char *hazLinea(char *base, int dir) {
 
 char *mapFile(char *filePath) {
     /* Abre archivo */
-    fd = open(filePath, O_RDONLY);
+    fd = open(filePath, O_RDWR);
     if (fd == -1) {
     	perror("Error abriendo el archivo");
 	    return(NULL);
@@ -51,7 +51,7 @@ char *mapFile(char *filePath) {
     fstat(fd,&st);
     int fs = st.st_size;
 
-    char *map = mmap(0, fs, PROT_READ, MAP_SHARED, fd, 0);
+    char *map = mmap(0, fs, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (map == MAP_FAILED) {
     	close(fd);
 	    perror("Error mapeando el archivo");
@@ -61,21 +61,27 @@ char *mapFile(char *filePath) {
   return map;
 }
 
+void pantalla(char *map, int base){
+	for(int i= 0; i<25; i++) {
+		// Haz linea, base y offset
+		char *l = hazLinea(map,base+i*16);
+		move(i,0);
+		addstr(l);
+	}
+	refresh();
+}
+
 int edita(char *filename) {
 	int i,c,x=0,y=0,px=0,offset=0,tamanol=16;
 	/* Lee archivo */
+	char c1,n1;
 	char *map = mapFile(filename);
 	if (map == NULL) {
 		exit(EXIT_FAILURE);
 	}
 	
-	for(i= 0; i<25; i++) {
-		// Haz linea, base y offset
-		char *l = hazLinea(map,i*16);
-		move(i,0);
-		addstr(l);
-	}
-	refresh();
+	pantalla(map,0);
+
 	do{
 		px= (x<16) ? x*3: 32+x;
 		move(0+y,9+px);
@@ -125,8 +131,40 @@ int edita(char *filename) {
 				if(x>0){
 					x -= 1;
 				}
+				else if(x == 0 && (y!=0 || offset!=0)){
+					y -= 1;
+					x = 31;
+				}
+				break;
+			default:
+				if(x<16){
+					char n = tolower(c);
+					if((n>='0' && n<='9') || (n>='a' && n<='f')){
+						c1 = leeChar();
+						char n1 = tolower(c1);
+						if((n1>='0' && n1<='9') || (n1>='a' && n1<='f')){
+							char hd[3];
+							hd[0]=n;
+							hd[1]=n1;
+							hd[2]=0;
+							long l = strtol(hd,NULL,16);
+							map[(offset+y)*16+x]=l;
+							pantalla(map, offset*16);
+						}
+					}
+				}
+				else{
+					char n = tolower(c);
+					if(isprint(n)){
+						map[(offset+y-1)*16+x]=n;
+						pantalla(map, offset*16);
+					}
+				}
 				break;
 		}
+		move(28,10);
+    printw("Estoy en x=%d y=%d, Offset %02i", x, y, offset);
+    clrtoeol();
 	}while(c != 24);
 
 	if (munmap(map, fd) == -1) {

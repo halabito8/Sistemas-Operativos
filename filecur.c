@@ -11,7 +11,6 @@ typedef struct s_dir {
 
 int leeChar();
 void leerdir(char *cwd, s_dir res[128], char lista[100][100], int *max);
-void Arriba();
 
 int main(){
   s_dir res[128];
@@ -74,17 +73,18 @@ int main(){
           char *p=strrchr(cwd,'/');
           *p=0;
           leerdir(cwd,res,lista,&max);
+          i = offset = 0;
           clear();
         }
         else if( lista[i + offset][0] == 'D' ){
           strcat(cwd,"/");
           strcat(cwd,lista[i + offset]+2);
-          printf("Hola %s\n", cwd);
           leerdir(cwd,res,lista,&max);
+          i = offset = 0;
           clear();
         }
         else if( lista[i + offset][0] == 'F'){
-          strcat(arch,lista[i + offset]+2);
+          strcpy(arch,lista[i + offset]+2);
           edita(arch);
           clear();
         }
